@@ -225,6 +225,22 @@ contract SkyMarket is AccessControl {
     function canPurchase(address user, uint256 id) public view returns (bool, uint256){
         return _canPurchase(user, id);
     }
+
+    function getAllListing(uint256 marketplaceId) public view returns (Listing[] memory) {
+        Listing[] memory _listings = new Listing[](listingSize);
+        uint256 currentId = _nextListing[INITIAL_LIST];
+        for(uint256 i = 0; currentId != INITIAL_LIST; ++i){
+            Listing memory _currentListing = listingMap[currentId];
+            
+            if(_currentListing.marketplaceId == marketplaceId){
+                _listings[i] = listingMap[currentId];
+            }
+
+            currentId = _nextListing[currentId];
+        } 
+          
+        return _listings;
+    }
     
     function getListings(bool active, uint256 marketplaceId) public view returns (Listing[] memory) {
         Listing[] memory _listings = new Listing[](listingSize);
@@ -233,22 +249,20 @@ contract SkyMarket is AccessControl {
             Listing memory _currentListing = listingMap[currentId];
             if(active){
                 if(
-                    _currentListing.start < block.timestamp && 
-                    _currentListing.end > block.timestamp &&
+                    (_currentListing.start < block.timestamp && 
+                    _currentListing.end > block.timestamp) &&
                     _currentListing.marketplaceId == marketplaceId
                 ) 
                     _listings[i] = listingMap[currentId];
-                    currentId = _nextListing[currentId];
             } else if (
-                    _currentListing.start > block.timestamp ||
-                    _currentListing.end < block.timestamp &&
+                    (_currentListing.start > block.timestamp ||
+                    _currentListing.end < block.timestamp) &&
                     _currentListing.marketplaceId == marketplaceId
                 )  {
                     _listings[i] = listingMap[currentId];
-                    currentId = _nextListing[currentId];
             }
 
-            if(_nextListing[currentId] == INITIAL_LIST) break;
+            currentId = _nextListing[currentId];
         } 
           
         return _listings;
